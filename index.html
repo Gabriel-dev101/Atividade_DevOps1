@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Converta valores entre moedas com cotações atuais.">
+  <meta name="theme-color" content="#050805">
+  <title>FinanX | Conversor de moedas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="converter.css">
+  <script src="converter.js" defer></script>
+</head>
+<body>
+  <main class="converter-shell">
+    <header class="site-header">
+      <a class="brand" href="#" aria-label="FinanX início">finan<span>X</span></a>
+      <span class="online-label"><span class="status-dot"></span>Cotação online</span>
+    </header>
+
+    <section class="converter-card" aria-labelledby="page-title">
+      <p class="eyebrow">FINANÇAS SEM FRONTEIRAS</p>
+      <h1 id="page-title">Conversor de moedas</h1>
+      <p class="intro">Consulte cotações e converta valores entre moedas.</p>
+
+      <form id="converter-form" class="converter-form">
+        <label class="field">
+          <span>Valor</span>
+          <input id="currency-amount" type="number" min="0" step="any" value="1" required>
+        </label>
+        <div class="currency-row">
+          <label class="field">
+            <span>De</span>
+            <select id="currency-from">
+              <option value="BRL">BRL — Real brasileiro</option>
+              <option value="USD">USD — Dólar americano</option>
+              <option value="EUR">EUR — Euro</option>
+              <option value="GBP">GBP — Libra esterlina</option>
+              <option value="JPY">JPY — Iene japonês</option>
+              <option value="CAD">CAD — Dólar canadense</option>
+              <option value="ARS">ARS — Peso argentino</option>
+            </select>
+          </label>
+          <button type="button" id="swap-currencies" class="swap-button" aria-label="Inverter moedas">⇄</button>
+          <label class="field">
+            <span>Para</span>
+            <select id="currency-to">
+              <option value="USD">USD — Dólar americano</option>
+              <option value="BRL">BRL — Real brasileiro</option>
+              <option value="EUR">EUR — Euro</option>
+              <option value="GBP">GBP — Libra esterlina</option>
+              <option value="JPY">JPY — Iene japonês</option>
+              <option value="CAD">CAD — Dólar canadense</option>
+              <option value="ARS">ARS — Peso argentino</option>
+            </select>
+          </label>
+        </div>
+        <button class="convert-button" type="submit" id="convert-button">Converter</button>
+      </form>
+
+      <div class="conversion-result" aria-live="polite" aria-atomic="true">
+        <span id="conversion-caption">1 BRL equivale a</span>
+        <strong id="conversion-value">Informe os dados e converta</strong>
+        <small id="conversion-rate"></small>
+        <button class="copy-button" id="copy-conversion" type="button" disabled>Copiar resultado</button>
+      </div>
+
+    </section>
+
+    <footer class="site-footer">FinanX · Conversor de moedas</footer>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  </main>
+</body>
+</html>
