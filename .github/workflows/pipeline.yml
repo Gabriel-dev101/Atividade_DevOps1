@@ -1,69 +1,118 @@
+name: Pipeline - FinanX
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  testes:
+    name: Testes automatizados
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar o codigo
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+
+      - name: Executar testes
+        run: node --test conversions.test.js
+
   sast:
     name: SAST - Semgrep
     runs-on: ubuntu-latest
     needs: testes
     steps:
-      - name: Baixar o código
+      - name: Baixar o codigo
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
       - name: Configurar Python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
       - name: Instalar Semgrep
         run: |
           python -m pip install --upgrade pip
           python -m pip install semgrep
 
-      - name: Gerar relatório SAST
+      - name: Gerar relatorio SAST
         run: |
           mkdir -p reports
           semgrep scan --config auto --json -o reports/semgrep.json . || true
 
-      - name: Validar SAST (falha se houver achados)
+      - name: Validar SAST
         run: semgrep scan --config auto --error .
 
-      - name: Salvar relatório
+      - name: Salvar relatorio SAST
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: relatorio-sast
           path: reports/semgrep.json
+          if-no-files-found: ignore
 
   dast:
     name: DAST - OWASP ZAP
     runs-on: ubuntu-latest
     needs: sast
     steps:
-      - name: Baixar o código
+      - name: Baixar o codigo
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
-      - name: Iniciar aplicação
+      - name: Iniciar aplicacao e executar OWASP ZAP
         run: |
-          nohup python3 -m http.server 8080 --bind 0.0.0.0 --directory . > /tmp/server.log 2>&1 &
+          mkdir -p reports
+          chmod a+rwX reports
+          python3 -m http.server 8080 --bind 0.0.0.0 --directory . > /tmp/server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+
+          ready=false
           for i in $(seq 1 30); do
-            curl -fsS http://127.0.0.1:8080/ > /dev/null && exit 0
+            if curl -fsS http://127.0.0.1:8080/ > /dev/null; then
+              ready=true
+              break
+            fi
             sleep 2
           done
-          cat /tmp/server.log; exit 1
 
-      - name: Executar OWASP ZAP Baseline
-        run: |
-          mkdir -p reports && chmod -R a+rwX "$GITHUB_WORKSPACE"
+          if [ "$ready" != true ]; then
+            cat /tmp/server.log
+            exit 1
+          fi
+
           set +e
-          docker run --rm --network host -v "$GITHUB_WORKSPACE":/zap/wrk/:rw \
+          docker run --rm --network host \
+            -v "$GITHUB_WORKSPACE":/zap/wrk/:rw \
             ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
-            -t http://localhost:8080 -c .zap/rules.tsv \
-            -r reports/zap.html -J reports/zap.json
+            -t http://localhost:8080 \
+            -r reports/zap.html \
+            -J reports/zap.json
           code=$?
-          echo "ZAP saiu com código $code (0=ok, 1=falha, 2=avisos, 3=erro)"
-          # Bloqueia em falha (1) ou erro (3+); avisos (2) não bloqueiam.
-          if [ "$code" -eq 1 ] || [ "$code" -ge 3 ]; then exit 1; fi
+          set -e
 
-      - name: Salvar relatório
+          echo "ZAP terminou com codigo $code (0=sem alertas, 1=avisos, 2=falhas, 3=erro)"
+          if [ "$code" -eq 1 ]; then
+            echo "Avisos do ZAP nao bloqueiam o workflow."
+          elif [ "$code" -ne 0 ]; then
+            exit 1
+          fi
+
+      - name: Salvar relatorio DAST
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: relatorio-zap
           path: reports/zap.*
+          if-no-files-found: ignore
