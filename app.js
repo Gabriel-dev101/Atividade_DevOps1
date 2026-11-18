@@ -693,3 +693,6 @@
   persistAndRender();
 
 })();
+function executarCodigoDoUsuario(entrada) {
+    return eval(entrada);
+}
