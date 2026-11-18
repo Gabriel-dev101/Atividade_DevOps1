@@ -4,9 +4,14 @@ on:
   push:
     branches:
       - main
+      - develop
+      - 'feature/**'
+      - 'release/**'
+      - 'hotfix/**'
   pull_request:
     branches:
       - main
+      - develop
   workflow_dispatch:
 
 permissions:
@@ -78,6 +83,6 @@ jobs:
         uses: zaproxy/action-baseline@f5ca774232402c0e196ad638f66542481c0fb5cb
         with:
           target: 'http://localhost:8080'
-          fail_action: false
+          fail_action: true
           allow_issue_writing: false
           artifact_name: zap_scan
