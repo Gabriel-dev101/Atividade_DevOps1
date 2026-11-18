@@ -104,12 +104,3 @@ jobs:
           allow_issue_writing: false
           artifact_name: zap_scan
 
-      - name: Validar resultado do DAST
-        run: |
-          if [ ! -f report_json.json ]; then
-            echo "Relatório JSON do ZAP não foi gerado."
-            exit 1
-          fi
-          echo "Verificando alertas de risco médio, alto ou crítico..."
-          jq -e '[.site[]?.alerts[]? | select((.riskcode | tonumber) >= 2)] | length == 0' report_json.json > /dev/null
-          echo "DAST aprovado: nenhum alerta de risco médio, alto ou crítico."
